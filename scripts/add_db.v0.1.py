@@ -9,7 +9,9 @@ conn = sqlite3.connect(in_db_addr)
 c = conn.cursor()
 c.execute('DROP TABLE IF EXISTS anno')
 c.execute(
-    'CREATE TABLE anno (variant text, chr text, pos integer, rsid text, af real, info real, enrichment_nfsee_genomes real, enrichment_nfsee_exomes real, gene_most_severe text, most_severe text, consequence_gnomad text, in_data )')
+    'CREATE TABLE anno (variant text, chr text, pos integer, rsid text, af real, info real, '
+    'enrichment_nfsee_genomes real, enrichment_nfsee_exomes real, gene_most_severe text, most_severe text, '
+    'consequence_gnomad text, in_data )')
 
 c.execute('DROP TABLE IF EXISTS chip')
 

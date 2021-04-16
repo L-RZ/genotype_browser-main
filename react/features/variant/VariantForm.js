@@ -174,7 +174,6 @@ export const VariantForm = (props) => {
 					<th>Concequence most severe</th>
 					<th>AF</th>
 					<th>Info</th>
-					// <th>Fin enr gnomad2 genomes/exomes</th>
 				</tr>
 				</thead>
 				<tbody>
@@ -185,7 +184,6 @@ export const VariantForm = (props) => {
 					<td>{annotation[0].most_severe.replace(/_/g, ' ')}</td>
 					<td>{af}</td>
 					<td>{annotation_info}</td>
-					// <td>{enr_genomes}/{enr_exomes}</td>
 				</tr>
 				</tbody>
 			</table>
@@ -199,7 +197,7 @@ export const VariantForm = (props) => {
 	    <div style={{display: 'flex', marginTop: "30px"}}>
 	    <div style={{display: 'flex', flexShrink: 0}}>
 
-	    <div style={{display: 'flex', flexDirection: 'column'}}>
+	    <div style={{display: 'flex', flexDirection: 'column', visibility: 'hidden'}}>
 	    <div><h3 style={{marginBottom: "10px", marginTop: "0px"}}>Sample filter</h3></div>
 	    <div className="hl" style={{width: "100%", borderTop: "1px solid #dddddd", marginTop: "0px", marginBottom: "10px"}}></div>
 	    <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -241,9 +239,9 @@ export const VariantForm = (props) => {
 	    </div>
 	    </div>
 
-	    <div className="vl" style={{height: "100%", borderLeft: "1px solid #dddddd", marginLeft: "20px", marginRight: "20px"}}></div>
+	    <div className="vl" style={{height: "100%", borderLeft: "1px solid #dddddd", marginLeft: "20px", marginRight: "20px", visibility: 'hidden'}}></div>
 
-	    <div style={{display: 'flex', flexDirection: 'column'}}>
+	    <div style={{display: 'flex', flexDirection: 'column', visibility: 'hidden'}}>
 	    <div><h3 style={{marginBottom: "10px", marginTop: "0px"}}>Genotype filter</h3></div>
 	    <div className="hl" style={{width: "100%", borderTop: "1px solid #dddddd", marginTop: "0px", marginBottom: "10px"}}></div>
 	    <div style={{display: 'flex', flexDirection: 'row'}}>
@@ -274,9 +272,9 @@ export const VariantForm = (props) => {
 	    </div>
 	    </div>
 
-	    <div className="vl" style={{height: "100%", borderLeft: "1px solid #dddddd", marginLeft: "20px", marginRight: "20px"}}></div>
+	    <div className="vl" style={{height: "100%", borderLeft: "1px solid #dddddd", marginLeft: "20px", marginRight: "20px", visibility: 'hidden'}}></div>
 
-	    <div style={{display: 'flex', flexDirection: 'column'}}>
+	    <div style={{display: 'flex', flexDirection: 'column', visibility: 'hidden'}}>
 	    <div><h3 style={{marginBottom: "10px", marginTop: "0px"}}>Show</h3></div>
 	    <div className="hl" style={{width: "100%", borderTop: "1px solid #dddddd", marginTop: "0px", marginBottom: "10px"}}></div>
 	    <div style={{display: 'flex', flexDirection: 'row'}}>

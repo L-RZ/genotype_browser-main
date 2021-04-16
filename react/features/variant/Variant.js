@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { VariantPlots } from './VariantPlots'
 import {
     fetchData,
     gtCount,
@@ -81,7 +80,6 @@ export const Variant = (props) => {
 			   </table>
 		   </div>
 		   </div>
-		   <VariantPlots />
 		   </div>)
     }
 

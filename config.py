@@ -23,6 +23,12 @@ vcf_files = {
     ]
 }
 
+
+'''
+chr1 chr1_0000.vcf end_pos 
+'''
+chr_end_pos_file = 'data/chr_end_pos.txt'
+
 write_dir = 'out'
 
 log_level = logging.INFO

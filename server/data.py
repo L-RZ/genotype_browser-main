@@ -3,7 +3,7 @@ import gzip, pysam, threading, logging, timeit, os, sqlite3
 import pandas as pd
 import numpy as np
 from collections import defaultdict, Counter
-
+import bisect
 import utils
 import re
 
@@ -12,6 +12,21 @@ class Datafetch(object):
     def _init_tabix(self):
         self.tabix_files_imputed = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['imputed_data']])
         self.tabix_files_chip = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['chip_data']])
+
+    def _init_chr_end(self):
+        chr_end_dict = {}
+        f_in_chr_end = open(self.conf['chr_end_pos_file'])
+        for i_, each_line in enumerate(f_in_chr_end):
+            chr_id, chr_sub_addr, end_pos = each_line.strip().split()
+            chr_id.replace('chr', '')
+            if chr_id in chr_end_dict:
+                chr_end_dict[chr_id]['vcf_index'].append(i_)
+                chr_end_dict[chr_id]['end_pos'].append(int(end_pos))
+            else:
+                chr_end_dict = {chr_id: {'vcf_index': [],
+                                         'end_pos': []}
+                                }
+        self.chr_end_dict = chr_end_dict
 
     def _init_db(self):
         self.conn = defaultdict(lambda: sqlite3.connect(self.conf['sqlite_db']))
@@ -54,6 +69,7 @@ class Datafetch(object):
         self._init_db()
         self.info, self.info_orig, self.cohort_list, self.region_list, self.info_columns = self._init_info(select_chip=False)
         self.info_chip, self.info_orig_chip, self.cohort_list_chip, self.region_list_chip, self.info_columns_chip = self._init_info(select_chip=True)
+        self._init_chr_end()
 
     def _get_annotation(self, chr, pos, ref, alt, data_type):
         in_data = 1 if data_type == 'imputed' else 2
@@ -67,13 +83,20 @@ class Datafetch(object):
             return dict(res)
         else:
             raise utils.NotFoundException(str(chr) + '-' + str(pos) + '-' + ref + '-' + alt)
-        
+
+    # each chr will include multi vcf files, get each vcf file end pos and build a index bin.
+    # using bisect.bisect to locate which bin(vcf file) include the SNP and fetch on it.
     def _get_genotype_data(self, chr, pos, ref, alt, data_type):
         chr_var = chr if chr != 23 else 'X'
+        vcf_index_l = self.chr_end_dict[str(chr_var)]['vcf_index']
+        end_pos_l = self.chr_end_dict[str(chr_var)]['end_pos']
+        chr_bin_index = bisect.bisect(end_pos_l, pos)
+        vcf_index = vcf_index_l[chr_bin_index]
+
         if data_type == 'imputed':
-            tabix_iter = self.tabix_files_imputed[threading.get_ident()][chr-1].fetch('chr'+str(chr_var), pos-1, pos)
+            tabix_iter = self.tabix_files_imputed[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
         else:
-            tabix_iter = self.tabix_files_chip[threading.get_ident()][chr-1].fetch('chr'+str(chr_var), pos-1, pos)
+            tabix_iter = self.tabix_files_chip[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
         var_data = None
         for row in tabix_iter:
             data = row.split('\t')            

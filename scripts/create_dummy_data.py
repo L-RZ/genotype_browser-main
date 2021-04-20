@@ -13,7 +13,7 @@ age_sd = np.std(real_data['AGE_AT_DEATH_OR_NOW'])
 death_prob = len(real_data[real_data['DEATH']==1])/len(real_data)
 sex_prob = len(real_data[real_data['SEX']==1])/len(real_data)
 
-print('\t'.join(['FINNGENID', 'DEATH', 'SEX', 'AGE_AT_DEATH_OR_NOW', 'regionofbirthname', 'cohort', 'BATCH', 'CHIP', 'ARRAY']))
+print('\t'.join(['ID', 'DEATH', 'SEX', 'AGE_AT_DEATH_OR_NOW', 'regionofbirthname', 'cohort', 'BATCH', 'CHIP', 'ARRAY']))
 dummy_ids = [line.strip() for line in open('ids.dummy', 'rt').readlines()]
 for id in dummy_ids:
     death = np.random.binomial(1, death_prob)

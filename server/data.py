@@ -13,19 +13,56 @@ class Datafetch(object):
         self.tabix_files_imputed = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['imputed_data']])
         self.tabix_files_chip = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['chip_data']])
 
+    # TODO only using chr_end_pos_file to load vcf
     def _init_chr_end(self):
         chr_end_dict = {}
         f_in_chr_end = open(self.conf['chr_end_pos_file'])
-        for i_, each_line in enumerate(f_in_chr_end):
-            chr_id, chr_sub_addr, end_pos = each_line.strip().split()
+        init_type = 0
+        for each_line in f_in_chr_end:
+            each_line_l = each_line.strip().split()
+            chr_id, chr_sub_addr, end_pos = each_line_l[:3]
+            dat_type = each_line_l[3].replace('_data', '')  # data type or db type
             chr_id.replace('chr', '')
-            if chr_id in chr_end_dict:
-                chr_end_dict[chr_id]['vcf_index'].append(i_)
-                chr_end_dict[chr_id]['end_pos'].append(int(end_pos))
+            if init_type == 0:
+                i_ = 0
+                init_type = dat_type
+            elif init_type == dat_type:
+                i_ += 1
             else:
-                chr_end_dict = {chr_id: {'vcf_index': [],
-                                         'end_pos': []}
-                                }
+                i_ = 0
+                init_type = dat_type
+
+            if dat_type in chr_end_dict:
+                if chr_id in chr_end_dict[dat_type]:
+                    chr_end_dict[dat_type][chr_id]['vcf_index'].append(i_)
+                    chr_end_dict[dat_type][chr_id]['end_pos'].append(int(end_pos))
+                else:
+                    chr_end_dict[dat_type] = {chr_id: {'vcf_index': [i_],
+                                                       'end_pos': [int(end_pos)]}
+                                              }
+            else:
+                chr_end_dict = {dat_type: {chr_id: {'vcf_index': [i_],
+                                                    'end_pos': [int(end_pos)]}}}
+            # if dat_type in chr_end_dict:
+            #     if chr_id in chr_end_dict[dat_type]:
+            #         chr_end_dict[dat_type][chr_id]['vcf_index'].append(i_)
+            #         chr_end_dict[dat_type][chr_id]['end_pos'].append(int(end_pos))
+            #     else:
+            #         chr_end_dict[dat_type] = {chr_id: {'vcf_index': [i_],
+            #                                  'end_pos': [int(end_pos)]}
+            #                                   }
+            # else:
+            #     chr_end_dict = {dat_type: {chr_id: {'vcf_index': [i_],
+            #                                        'end_pos': [int(end_pos)]}}
+            #                     }
+            #
+            # if chr_id in chr_end_dict:
+            #     chr_end_dict[chr_id]['vcf_index'].append(i_)
+            #     chr_end_dict[chr_id]['end_pos'].append(int(end_pos))
+            # else:
+            #     chr_end_dict = {chr_id: {'vcf_index': [i_],
+            #                              'end_pos': [int(end_pos)]}
+            #                     }
         self.chr_end_dict = chr_end_dict
 
     def _init_db(self):
@@ -88,9 +125,9 @@ class Datafetch(object):
     # using bisect.bisect to locate which bin(vcf file) include the SNP and fetch on it.
     def _get_genotype_data(self, chr, pos, ref, alt, data_type):
         chr_var = chr if chr != 23 else 'X'
-        vcf_index_l = self.chr_end_dict[str(chr_var)]['vcf_index']
-        end_pos_l = self.chr_end_dict[str(chr_var)]['end_pos']
-        chr_bin_index = bisect.bisect(end_pos_l, pos)
+        vcf_index_l = self.chr_end_dict[data_type][str(chr_var)]['vcf_index']
+        end_pos_l = self.chr_end_dict[data_type][str(chr_var)]['end_pos']
+        chr_bin_index = bisect.bisect_left(end_pos_l, pos)
         vcf_index = vcf_index_l[chr_bin_index]
 
         if data_type == 'imputed':
@@ -438,7 +475,7 @@ class Datafetch(object):
             vars_db = self.get_genomic_range_variants(gene_db[0]['chr'], gene_db[0]['start'], gene_db[0]['end'], data_type)
             res_vars = vars_db['data']
         # drop columns we don't show
-        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr', 'pos', 'in_data',  'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
+        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr', 'info', 'in_data',  'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
         cols = [col for col in res_vars[0].keys() if col not in exclude_cols]
         return {
             'gene': gene,
@@ -462,7 +499,7 @@ class Datafetch(object):
             item['variant'] = '-'.join(item['variant'].split(':'))
             data.append(item)
         genomic_range = "%s:%s-%s" % (chr, start, end)                     
-        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr', 'pos', 'in_data', 'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
+        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr', 'info', 'in_data', 'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
         cols = [col for col in data[0].keys() if col not in exclude_cols]
         return {
             'range': genomic_range,

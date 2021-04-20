@@ -30,7 +30,7 @@ First install htslib (tabix), see [Dockerfile](docker/Dockerfile) or [http://www
 Install and run the server, e.g.:
 
 ```
-git clone https://github.com/FINNGEN/genotype_browser
+git clone https://github.com/L-RZ/genotype_browser-main.git
 cd genotype_browser
 pip3 install -r requirements.txt
 cp config/config.py.dummy config.py

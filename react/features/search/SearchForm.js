@@ -63,7 +63,8 @@ export const SearchForm = () => {
     		error_message = error.message
     	}
     }
-
+//	    <input type="radio" value="imputed" id="imputed" name="dtype" checked = {dtype == 'imputed' ? "checked" : ""} onChange={handleDataTypeChange} />
+//	    <label>Imputed data</label>
     return (
 	    <div style={{display: 'flex', paddingBottom: '20px'}}>
 	    <label style={{paddingRight: '10px'}}>
@@ -71,9 +72,8 @@ export const SearchForm = () => {
 	    </label>
 	    <div style={{paddingRight: '10px'}}>
 	    <input type="radio" value="chip" id="chip" name="dtype" checked = {dtype == 'chip' ? "checked" : ""}  onChange={handleDataTypeChange} />
-	    <label>chip data</label>
-	    <input type="radio" value="imputed" id="imputed" name="dtype" checked = {dtype == 'imputed' ? "checked" : ""} onChange={handleDataTypeChange} />
-	    <label>Imputed data</label>
+	    <label>exomes data</label>
+
 	    </div>
 	    <button type="button" className="button" onClick={handleSearch}>search</button>
 	    <div style={{paddingLeft: '10px'}}>{clientError}</div>

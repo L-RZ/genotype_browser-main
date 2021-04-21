@@ -14,6 +14,7 @@ export const VariantContainer = ({ match: { params } }) => {
 	    <div className="header">{params.variant || '...'}</div>
 	    <div className="header"></div>
 	    </div>
+	    <div style={{paddingLeft: '10px'}}><a href={`https://gnomad.broadinstitute.org/variant/${params.variant}?dataset=gnomad_r3`} target='_blank'>gnomad</a></div>
 	    <VariantForm props={params}/>
 	    <div style={{paddingTop: '10px'}}>
 	    <Variant props={params}/>

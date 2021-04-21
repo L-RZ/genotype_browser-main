@@ -13,7 +13,7 @@ class Datafetch(object):
         self.tabix_files_imputed = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['imputed_data']])
         self.tabix_files_chip = defaultdict(lambda: [pysam.TabixFile(file, parser=None) for file in self.conf['vcf_files']['chip_data']])
 
-    # TODO only using chr_end_pos_file to load vcf
+
     def _init_chr_end(self):
         chr_end_dict = {}
         f_in_chr_end = open(self.conf['chr_end_pos_file'])
@@ -33,16 +33,28 @@ class Datafetch(object):
                 init_type = dat_type
 
             if dat_type in chr_end_dict:
+                chr_end_dict[dat_type]['file_addr'].append(chr_sub_addr)
                 if chr_id in chr_end_dict[dat_type]:
                     chr_end_dict[dat_type][chr_id]['vcf_index'].append(i_)
                     chr_end_dict[dat_type][chr_id]['end_pos'].append(int(end_pos))
+
                 else:
                     chr_end_dict[dat_type] = {chr_id: {'vcf_index': [i_],
                                                        'end_pos': [int(end_pos)]}
                                               }
             else:
                 chr_end_dict = {dat_type: {chr_id: {'vcf_index': [i_],
-                                                    'end_pos': [int(end_pos)]}}}
+                                                    'end_pos': [int(end_pos)]},
+                                           'file_addr': [chr_sub_addr]
+                                           }
+                                }
+        for each_type in chr_end_dict:
+            chr_end_dict[each_type]['tabix'] = defaultdict(
+                lambda: [pysam.TabixFile(each_vcf, parser=None)
+                         for each_vcf in chr_end_dict[each_type]['file_addr']]
+            )
+
+
             # if dat_type in chr_end_dict:
             #     if chr_id in chr_end_dict[dat_type]:
             #         chr_end_dict[dat_type][chr_id]['vcf_index'].append(i_)
@@ -101,8 +113,8 @@ class Datafetch(object):
         return info, info_orig, cohort_list, region_list, info_columns
 
     def __init__(self, conf):
-        self.conf=conf
-        self._init_tabix()
+        self.conf = conf
+        # self._init_tabix()
         self._init_db()
         self.info, self.info_orig, self.cohort_list, self.region_list, self.info_columns = self._init_info(select_chip=False)
         self.info_chip, self.info_orig_chip, self.cohort_list_chip, self.region_list_chip, self.info_columns_chip = self._init_info(select_chip=True)
@@ -130,10 +142,12 @@ class Datafetch(object):
         chr_bin_index = bisect.bisect_left(end_pos_l, pos)
         vcf_index = vcf_index_l[chr_bin_index]
 
-        if data_type == 'imputed':
-            tabix_iter = self.tabix_files_imputed[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
-        else:
-            tabix_iter = self.tabix_files_chip[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
+        # if data_type == 'imputed':
+        #     tabix_iter = self.tabix_files_imputed[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
+        # else:
+        #     tabix_iter = self.tabix_files_chip[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
+        tabix_iter = self.chr_end_dict[data_type]['tabix'][threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
+
         var_data = None
         for row in tabix_iter:
             data = row.split('\t')            

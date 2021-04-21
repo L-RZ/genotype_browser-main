@@ -18,7 +18,7 @@ export const VariantForm = (props) => {
     // update state if variant was open in a separate window and thus the
     // data type is obtained from the url params
     var dtype = props.props.data_type
-    const source = dtype == 'imputed' ? 'Imputed data' : 'Raw chip data'
+    const source = dtype == 'imputed' ? 'Imputed data' : 'exomes data'
     useEffect(() => {
 		dispatch(setDataType({content: dtype}))
     }, [])

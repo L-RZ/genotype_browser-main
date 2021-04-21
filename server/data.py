@@ -475,7 +475,7 @@ class Datafetch(object):
             vars_db = self.get_genomic_range_variants(gene_db[0]['chr'], gene_db[0]['start'], gene_db[0]['end'], data_type)
             res_vars = vars_db['data']
         # drop columns we don't show
-        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr', 'info', 'in_data',  'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
+        exclude_cols = ['gene_most_severe', 'consequence_gnomad', 'chr',  'info', 'in_data',  'enrichment_nfsee_genomes', 'enrichment_nfsee_exomes']
         cols = [col for col in res_vars[0].keys() if col not in exclude_cols]
         return {
             'gene': gene,

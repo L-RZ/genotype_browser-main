@@ -99,7 +99,7 @@ export const Range = (props) => {
 	    onFilteredChange={filtered => { setFilt(filtered) }}
 	    columns={columns}
 	    defaultSorted={[{
-		id: "variant",
+		id: "pos",
 		desc: false
 	    }]}
 	    defaultPageSize={15}

@@ -108,6 +108,15 @@ export const getColumns = (gene, checked, handleCheck, handleCheckAll, dtype) =>
 		Cell: props => props.value == 'NA' ? 'NA' : (props.value).toExponential(2),
 		filterMethod: afFilter
 	    }
+	} else if (c == 'pos') {
+	    return {
+	    Header: c,
+	    accessor: c,
+	    style: {textAlign: 'right'},
+	    headerStyle: {textAlign: 'right'},
+	    Cell: props => props.value == 'NA' ? 'NA' : (props.value).toFixed(0),
+	    filterMethod: numFilter
+	    }
 	} else if (c == 'af_genomes') {
 	    return {
 	    Header: c.replace('af_', 'fin af gnomad2 '),

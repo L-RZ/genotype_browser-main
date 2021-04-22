@@ -173,7 +173,6 @@ export const VariantForm = (props) => {
 					<th>Gene most severe</th>
 					<th>Concequence most severe</th>
 					<th>AF</th>
-					<th>Info</th>
 				</tr>
 				</thead>
 				<tbody>
@@ -183,7 +182,6 @@ export const VariantForm = (props) => {
 					<td>{gene_tag}</td>
 					<td>{annotation[0].most_severe.replace(/_/g, ' ')}</td>
 					<td>{af}</td>
-					<td>{annotation_info}</td>
 				</tr>
 				</tbody>
 			</table>

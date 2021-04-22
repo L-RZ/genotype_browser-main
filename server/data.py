@@ -84,7 +84,8 @@ class Datafetch(object):
         info = pd.read_csv(self.conf['basic_info_file'], sep='\t').fillna('NA')
         if select_chip:
             info.index = info['ID']
-            tabix_iter = self.tabix_files_chip[threading.get_ident()][0]
+            tabix_iter = self.chr_end_dict['chip']['tabix'][threading.get_ident()][0]
+            # tabix_iter = self.tabix_files_chip[threading.get_ident()][0]
             h = tabix_iter.header[len(tabix_iter.header) - 1].split('\t')
             chip_samples = h[9:]
             info = info.loc[chip_samples, :]
@@ -115,10 +116,11 @@ class Datafetch(object):
     def __init__(self, conf):
         self.conf = conf
         # self._init_tabix()
+        self._init_chr_end()
         self._init_db()
         self.info, self.info_orig, self.cohort_list, self.region_list, self.info_columns = self._init_info(select_chip=False)
         self.info_chip, self.info_orig_chip, self.cohort_list_chip, self.region_list_chip, self.info_columns_chip = self._init_info(select_chip=True)
-        self._init_chr_end()
+
 
     def _get_annotation(self, chr, pos, ref, alt, data_type):
         in_data = 1 if data_type == 'imputed' else 2
@@ -462,9 +464,26 @@ class Datafetch(object):
         else:
             for key in ['array', 'impchip', 'data_type']:
                 del filters[key]
-            filename = variants.replace(',', '_') + '__rawchip_data__' + '_'.join([k+'_'+v for k,v in filters.items()]) + '.tsv'
-        data = data.drop(columns=['AGE_AT_DEATH_OR_NOW'])
-        data['SEX'] = np.where(data['SEX'] == 1, 'female', 'male')
+            # filename = variants.replace(',', '_') + '__rawchip_data__' + '_'.join([k+'_'+v for k,v in filters.items()]) + '.tsv'
+            filename = variants.replace(',', '_') + '__raw_data__' + '_'.join(
+                [k + '_' + v for k, v in filters.items() if k not in ('alive', 'sex')]) + '.tsv'
+        # data = data.drop(columns=['AGE_AT_DEATH_OR_NOW'])
+        # data['SEX'] = np.where(data['SEX'] == 1, 'female', 'male')
+        data = data.drop(columns=['AGE_AT_DEATH_OR_NOW', 'DEATH', 'SEX', 'regionofbirthname',
+                                  'cohort', 'BATCH', 'CHIP', 'ARRAY'])
+        # output Genotype
+        var_id_dict = {}
+        for each_var_id in set(data['variant'].to_list()):
+            snp_chr, snp_pos, snp_ref, snp_alt = each_var_id.split(':')
+            var_id_dict[each_var_id] = {'./.': './.',
+                                        '1/1': '{}/{}'.format(snp_alt, snp_alt),
+                                        '0/1': '{}/{}'.format(snp_ref, snp_alt),
+                                        '1/0': '{}/{}'.format(snp_ref, snp_alt),
+                                        '0/0': '{}/{}'.format(snp_ref, snp_ref),
+                                        }
+        gt_real = [var_id_dict[gt_var[1]][gt_var[0]]
+            for gt_var in zip(data['gt'].to_list(), data['variant'].to_list())]
+        data['genotype'] = gt_real
         try:
             data.to_csv(sep='\t', index=False, na_rep='NA')
             output = make_response(data.to_csv(sep='\t', index=False, na_rep='NA'))

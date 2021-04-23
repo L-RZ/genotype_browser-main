@@ -39,20 +39,21 @@ class Datafetch(object):
                     chr_end_dict[dat_type][chr_id]['end_pos'].append(int(end_pos))
 
                 else:
-                    chr_end_dict[dat_type] = {chr_id: {'vcf_index': [i_],
+                    chr_end_dict[dat_type][chr_id] = {'vcf_index': [i_],
                                                        'end_pos': [int(end_pos)]}
-                                              }
+
+
             else:
                 chr_end_dict = {dat_type: {chr_id: {'vcf_index': [i_],
                                                     'end_pos': [int(end_pos)]},
                                            'file_addr': [chr_sub_addr]
                                            }
                                 }
-        for each_type in chr_end_dict:
-            chr_end_dict[each_type]['tabix'] = defaultdict(
-                lambda: [pysam.TabixFile(each_vcf, parser=None)
-                         for each_vcf in chr_end_dict[each_type]['file_addr']]
-            )
+        # for each_type in chr_end_dict:
+        #     chr_end_dict[each_type]['tabix'] = defaultdict(
+        #         lambda: [pysam.TabixFile(each_vcf, parser=None)
+        #                  for each_vcf in chr_end_dict[each_type]['file_addr']]
+        #     )
 
 
             # if dat_type in chr_end_dict:
@@ -84,7 +85,10 @@ class Datafetch(object):
         info = pd.read_csv(self.conf['basic_info_file'], sep='\t').fillna('NA')
         if select_chip:
             info.index = info['ID']
-            tabix_iter = self.chr_end_dict['chip']['tabix'][threading.get_ident()][0]
+            first_vcf = self.chr_end_dict['chip']['file_addr'][0]
+            tabix_iter = defaultdict(lambda: [pysam.TabixFile(first_vcf, parser=None)])[threading.get_ident()][0]
+
+            # tabix_iter = self.chr_end_dict['chip']['tabix'][threading.get_ident()][0]
             # tabix_iter = self.tabix_files_chip[threading.get_ident()][0]
             h = tabix_iter.header[len(tabix_iter.header) - 1].split('\t')
             chip_samples = h[9:]
@@ -148,8 +152,9 @@ class Datafetch(object):
         #     tabix_iter = self.tabix_files_imputed[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
         # else:
         #     tabix_iter = self.tabix_files_chip[threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
-        tabix_iter = self.chr_end_dict[data_type]['tabix'][threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
-
+        # tabix_iter = self.chr_end_dict[data_type]['tabix'][threading.get_ident()][vcf_index].fetch('chr'+str(chr_var), pos-1, pos)
+        vcf_addr = self.chr_end_dict[data_type]['file_addr'][vcf_index]
+        tabix_iter = defaultdict(lambda: [pysam.TabixFile(vcf_addr, parser=None)])[threading.get_ident()][0].fetch('chr'+str(chr_var), pos-1, pos)
         var_data = None
         for row in tabix_iter:
             data = row.split('\t')            
@@ -522,7 +527,7 @@ class Datafetch(object):
         if self.conn[threading.get_ident()].row_factory is None:
             self.conn[threading.get_ident()].row_factory = sqlite3.Row
         c = self.conn[threading.get_ident()].cursor()
-        query = 'SELECT * FROM anno WHERE chr=%s AND pos>=%s AND pos<=%s AND (in_data=%s OR in_data=3);' % (chr, start, end, in_data)
+        query = 'SELECT * FROM anno WHERE chr="%s" AND pos>=%s AND pos<=%s AND (in_data=%s OR in_data=3);' % (chr, start, end, in_data)
         c.execute(query)
         res = [dict(row) for row in c.fetchall()]
         if len(res) == 0:

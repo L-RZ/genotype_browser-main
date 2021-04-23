@@ -1,10 +1,11 @@
 import sqlite3
 import sys, os
 import argparse
+import gzip
 import re
 # make fake anno db from only VCF file
-in_vcf_addr = sys.argv[1]
-in_db_addr = sys.argv[2]
+# in_vcf_addr = sys.argv[1]
+# in_db_addr = sys.argv[2]
 
 parser = argparse.ArgumentParser(description='create db or add variant to db')
 parser.add_argument('-i', '--in_vcf', nargs='+', help='input vcf file')
@@ -31,7 +32,10 @@ if args.mode == 'new':
     c.execute('CREATE TABLE chip (variant text, chip text)')
 chr_end_l = []
 for in_vcf_addr in in_vcf_addr_l:
-    f_in_vcf = open(in_vcf_addr)
+    if in_vcf_addr.endswith('.gz'):
+        f_in_vcf = gzip.open(in_vcf_addr, 'rt')
+    else:
+        f_in_vcf = open(in_vcf_addr)
     for line in f_in_vcf:
         if not line.startswith('#'):
             line_l = line.split('\t')

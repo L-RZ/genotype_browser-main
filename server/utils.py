@@ -8,7 +8,9 @@ class NotFoundException(Exception):
 
 def parse_chr(chr):
     chr = re.sub(r'^0', '', str(chr))
-    return int(chr.lower().replace('chr', '').replace('x', '23'))
+    # return int(chr.lower().replace('chr', '').replace('x', '23'))
+    return str(chr.lower().replace('chr', '').replace('x', 'X').replace('23', 'X'))
+
 
 def parse_variant(variant):
     s = re.compile('-|_|:').split(variant)

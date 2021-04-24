@@ -474,8 +474,8 @@ class Datafetch(object):
                 [k + '_' + v for k, v in filters.items() if k not in ('alive', 'sex')]) + '.tsv'
         # data = data.drop(columns=['AGE_AT_DEATH_OR_NOW'])
         # data['SEX'] = np.where(data['SEX'] == 1, 'female', 'male')
-        data = data.drop(columns=['AGE_AT_DEATH_OR_NOW', 'DEATH', 'SEX', 'regionofbirthname',
-                                  'cohort', 'BATCH', 'CHIP', 'ARRAY'])
+        data = data.drop(columns=['AGE_AT_DEATH_OR_NOW', 'DEATH', 'regionofbirthname',
+                                   'BATCH', 'CHIP', 'ARRAY'])
         # output Genotype
         var_id_dict = {}
         for each_var_id in set(data['variant'].to_list()):

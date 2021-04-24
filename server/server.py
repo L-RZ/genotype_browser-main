@@ -1,7 +1,14 @@
-from flask import Flask, jsonify, request, abort, render_template
+from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from flask_compress import Compress
 import imp, logging
+import os
 import re
+
+from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms import StringField, PasswordField
+from wtforms.validators import DataRequired, EqualTo
+from flask_wtf import FlaskForm
 
 from utils import parse_chr, parse_region, ParseException, NotFoundException
 from data import Datafetch
@@ -9,6 +16,85 @@ from search import Search
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 Compress(app)
+
+app.secret_key = os.urandom(42)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+#  TODO change the name and password before deploying
+USERS = [
+    {
+        "id": 1,
+        "name": 'lily',
+        "password": generate_password_hash('123')
+    },
+    {
+        "id": 2,
+        "name": 'tom',
+        "password": generate_password_hash('123')
+    }
+]
+
+def get_user(user_name):
+    for user in USERS:
+        if user.get("name") == user_name:
+            return user
+    return None
+
+class User(UserMixin):
+    def __init__(self, user):
+        self.username = user.get("name")
+        self.password_hash = user.get("password")
+        self.id = user.get("id")
+
+    def verify_password(self, password):
+        if self.password_hash is None:
+            return False
+        return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        return self.id
+
+    @staticmethod
+    def get(user_id):
+        if not user_id:
+            return None
+        for user in USERS:
+            if user.get('id') == user_id:
+                return User(user)
+        return None
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(user_id)
+
+class LoginForm(FlaskForm):
+    username = StringField('username', validators=[DataRequired()])
+    password = PasswordField('password', validators=[DataRequired()])
+
+
+@app.route('/login/', methods=('GET', 'POST'))
+def login():
+    form = LoginForm()
+    emsg = None
+    if form.validate_on_submit():
+        user_name = form.username.data
+        password = form.password.data
+        user_info = get_user(user_name)
+        if user_info is None:
+            emsg = "username or password error"
+        else:
+            user = User(user_info)
+            if user.verify_password(password):
+                login_user(user, remember=True)
+                return redirect(request.args.get('next') or url_for('index'))
+            else:
+                emsg = "username or password error"
+    return render_template('login.html', form=form, emsg=emsg)
+
 
 config = {}
 try:
@@ -27,11 +113,21 @@ search = Search(config)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
+@login_required
 def index(path):
     # return 'Hello World '
     return render_template('index.html')
 
+
+@app.route('/logout')   # logout
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
 @app.route('/api/v1/find/<query>')
+@login_required
 def find(query):
     try:
         data_type = request.args.get('data_type')
@@ -41,8 +137,10 @@ def find(query):
     except NotFoundException as e:
         abort(404, 'not found')
     return jsonify(result)
-    
+
+
 @app.route('/api/v1/variants/<variants>')
+@login_required
 def variants(variants):
     #print(request.args.to_dict())
     try:
@@ -55,6 +153,7 @@ def variants(variants):
     return jsonify(data)
 
 @app.route('/api/v1/gene_variants/<gene>')
+@login_required
 def gene_variants(gene):
     try:
         data_type = request.args.get('data_type')
@@ -65,7 +164,9 @@ def gene_variants(gene):
         abort(404, 'gene not in data')
     return jsonify(data)
 
+
 @app.route('/api/v1/write_variants/<variants>')
+@login_required
 def write_variants(variants):
     try:
         data_type = request.args.get('data_type')
@@ -76,7 +177,9 @@ def write_variants(variants):
         abort(404, 'variant(s) not in data')
     return status
 
+
 @app.route('/api/v1/range/<range>')
+@login_required
 def range(range):
     data_type = request.args.get('data_type')
     try:

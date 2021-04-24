@@ -5,7 +5,7 @@ import os
 import re
 
 from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from wtforms import StringField, PasswordField
 from wtforms.validators import DataRequired, EqualTo
 from flask_wtf import FlaskForm
@@ -24,19 +24,18 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 
-#  TODO change the name and password before deploying
-USERS = [
-    {
-        "id": 1,
-        "name": 'lily',
-        "password": generate_password_hash('123')
-    },
-    {
-        "id": 2,
-        "name": 'tom',
-        "password": generate_password_hash('123')
-    }
-]
+config = {}
+try:
+    _conf_module = imp.load_source('config', 'config.py')
+except Exception as e:
+    print('Could not load config.py')
+    raise
+config = {key: getattr(_conf_module, key) for key in dir(_conf_module) if not key.startswith('_')}
+USERS = config['USERS']
+gunicorn_logger = logging.getLogger('gunicorn.error')
+app.logger.handlers = gunicorn_logger.handlers
+app.logger.setLevel(config['log_level'])
+
 
 def get_user(user_name):
     for user in USERS:
@@ -96,17 +95,6 @@ def login():
     return render_template('login.html', form=form, emsg=emsg)
 
 
-config = {}
-try:
-    _conf_module = imp.load_source('config', 'config.py')
-except Exception as e:
-    print('Could not load config.py')
-    raise
-config = {key: getattr(_conf_module, key) for key in dir(_conf_module) if not key.startswith('_')}
-
-gunicorn_logger = logging.getLogger('gunicorn.error')
-app.logger.handlers = gunicorn_logger.handlers
-app.logger.setLevel(config['log_level'])
 
 fetch = Datafetch(config)
 search = Search(config)
